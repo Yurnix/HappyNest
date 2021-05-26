@@ -4,6 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 //some changes
 
+//EDO EGRAPSE O POUYAS
 public class JdbcSelectTest {   // Save as "JdbcSelectTest.java"
 
     public static void main(String[] args) {
