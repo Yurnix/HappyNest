@@ -2,6 +2,7 @@
 import java.sql.*;  // Using 'Connection', 'Statement' and 'ResultSet' classes in java.sql package
 import java.util.logging.Level;
 import java.util.logging.Logger;
+//some changes
 
 public class JdbcSelectTest {   // Save as "JdbcSelectTest.java"
 
