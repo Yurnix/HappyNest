@@ -8,7 +8,8 @@ public class JdbcSelectTest {   // Save as "JdbcSelectTest.java"
 
     public static void main(String[] args) {
         try {
-            
+            String a;
+            a = "made some changes";
                                      // The format is: "jdbc:mysql://hostname:port/databaseName", "username", "password"
             Connection c = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbHappyNest?", "root", "ebisonovsekonem");
             Statement stmt = c.createStatement();
