@@ -7,6 +7,8 @@ import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
 
 public class Vendors extends javax.swing.JFrame {
 
@@ -15,7 +17,70 @@ public class Vendors extends javax.swing.JFrame {
         initComponents();
         establish_connection();
         initLocalConnection();
+        initTable();
         loadVendorsList();
+        editCategoryButton.setVisible(false);
+        removeCategoryButton.setVisible(false);
+    }
+    
+    public void initTable()
+    {
+        productsTable.getColumnModel().getColumn(0).setMinWidth(5);
+        productsTable.getColumnModel().getColumn(0).setMaxWidth(400);
+        
+        productsTable.getColumnModel().getColumn(1).setMinWidth(5);
+        productsTable.getColumnModel().getColumn(1).setMaxWidth(70);
+        
+        productsTable.getColumnModel().getColumn(2).setMinWidth(5);
+        productsTable.getColumnModel().getColumn(2).setMaxWidth(70);
+        
+        productsTable.getColumnModel().getColumn(3).setMinWidth(5);
+        productsTable.getColumnModel().getColumn(3).setMaxWidth(120);
+        
+        productsTable.getColumnModel().getColumn(4).setMinWidth(10);
+        productsTable.getColumnModel().getColumn(4).setMaxWidth(200);
+        
+        productsTable.getColumnModel().getColumn(5).setMinWidth(0);
+        productsTable.getColumnModel().getColumn(5).setMaxWidth(0);
+    }
+    
+    public void loadProductTable()
+    {
+        try {
+            if(categoryBox.getSelectedIndex() != 0) {
+                command = "select * from products where products.supplierID = "
+                    + Integer.toString((int)vendorsTable.getModel().getValueAt(vendorsTable.getSelectedRow(), 1))
+                    + " and products.categName = \'"
+                    + categoryBox.getSelectedItem().toString()
+                    + "\' order by products.productName";
+            }
+            else {
+                command = "select * from products where products.supplierID = "
+                    + Integer.toString((int)vendorsTable.getModel().getValueAt(vendorsTable.getSelectedRow(), 1))
+                    + " order by products.productName";
+            }
+            
+            descriptionField.setText(command);
+            resultSet = stmt.executeQuery(command);
+            
+            productsTableModel = (DefaultTableModel) productsTable.getModel();
+            while(productsTableModel.getRowCount() != 0)
+                productsTableModel.removeRow(0);
+            while(resultSet.next())
+                productsTableModel.addRow(new Object[] 
+                {
+                    resultSet.getString("productName"),
+                    resultSet.getFloat("productPrice"),
+                    resultSet.getFloat("productTax")*100,
+                    resultSet.getFloat("productFinalPrice"),
+                    Long.toString(resultSet.getLong("productEntryDate")),
+                    resultSet.getInt("productID")
+                });
+                
+                
+        } catch (SQLException ex) {
+            Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     public void initLocalConnection()
@@ -53,10 +118,9 @@ public class Vendors extends javax.swing.JFrame {
         //JOptionPane.showMessageDialog(new JLabel(), pname + "\n" + pdesc);
             if(edit) 
             {
-                int ven = vendorsList.getSelectedIndex();
+                int ven = vendorsTable.getSelectedRow();
                 if(ven == -1) // if nothing selected
                     return;
-                
             }
             else
             {
@@ -79,17 +143,20 @@ public class Vendors extends javax.swing.JFrame {
     
     private void loadVendorsList()
     {
-        listModel = new DefaultListModel();
+        vendorsTableModel = (DefaultTableModel) vendorsTable.getModel();
         //listModel.clear();
         
         try {
-            command = "select * from suppliers";
+            command = "select * from suppliers order by suppliers.supplierName";
             resultSet = stmt.executeQuery(command);
+            while (vendorsTable.getRowCount() != 0)
+                vendorsTableModel.removeRow(0);
+            
             while (resultSet.next())
             {
-                listModel.addElement(resultSet.getString("supplierName"));
+                vendorsTableModel.addRow(new Object[] { resultSet.getString("supplierName"), resultSet.getInt("supplierID") });
             }
-            vendorsList.setModel(listModel);
+            vendorsTable.setModel(vendorsTableModel);
         } catch (SQLException ex) {
             Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -103,12 +170,12 @@ public class Vendors extends javax.swing.JFrame {
         jSeparator1 = new javax.swing.JSeparator();
         jPanel2 = new javax.swing.JPanel();
         jSeparator2 = new javax.swing.JSeparator();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        vendorsList = new javax.swing.JList<>();
         jLabel1 = new javax.swing.JLabel();
         addVendorButton = new javax.swing.JButton();
         editVendorButton = new javax.swing.JButton();
         removeVendorButton = new javax.swing.JButton();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        vendorsTable = new javax.swing.JTable();
         jLabel2 = new javax.swing.JLabel();
         searchField = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
@@ -125,22 +192,15 @@ public class Vendors extends javax.swing.JFrame {
         addProductButton = new javax.swing.JButton();
         editProductButton = new javax.swing.JButton();
         removeProdutButton = new javax.swing.JButton();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        categoryBox = new javax.swing.JComboBox<>();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        productsTable = new javax.swing.JTable();
         addCategoryButton = new javax.swing.JButton();
         removeCategoryButton = new javax.swing.JButton();
         editCategoryButton = new javax.swing.JButton();
         cloudPicLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        vendorsList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        jScrollPane1.setViewportView(vendorsList);
 
         jLabel1.setFont(new java.awt.Font("Segoe UI Emoji", 1, 18)); // NOI18N
         jLabel1.setText("Vendor");
@@ -161,6 +221,27 @@ public class Vendors extends javax.swing.JFrame {
 
         removeVendorButton.setText("Remove");
 
+        vendorsTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "Vendor", "supplierID"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.Integer.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        jScrollPane4.setViewportView(vendorsTable);
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -169,21 +250,23 @@ public class Vendors extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(addVendorButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(editVendorButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 239, Short.MAX_VALUE)
-                    .addComponent(removeVendorButton, javax.swing.GroupLayout.DEFAULT_SIZE, 239, Short.MAX_VALUE))
+                    .addComponent(editVendorButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(removeVendorButton, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE))
                 .addContainerGap())
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(addVendorButton)
@@ -191,6 +274,11 @@ public class Vendors extends javax.swing.JFrame {
                 .addComponent(editVendorButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(removeVendorButton))
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                    .addContainerGap(39, Short.MAX_VALUE)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(107, Short.MAX_VALUE)))
         );
 
         jLabel2.setFont(new java.awt.Font("Segoe UI Black", 0, 24)); // NOI18N
@@ -215,20 +303,34 @@ public class Vendors extends javax.swing.JFrame {
 
         removeProdutButton.setText("Remove");
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All Products" }));
+        categoryBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All Products", "something" }));
+        categoryBox.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                categoryBoxItemStateChanged(evt);
+            }
+        });
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        productsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Product Name", "Cost", "Tax", "Cost with Tax", "Creation Date", "dbID"
             }
-        ));
-        jScrollPane3.setViewportView(jTable1);
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.Float.class, java.lang.Integer.class, java.lang.Float.class, java.lang.String.class, java.lang.Integer.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        productsTable.setShowGrid(true);
+        jScrollPane3.setViewportView(productsTable);
 
         addCategoryButton.setText("Add Category");
 
@@ -268,7 +370,7 @@ public class Vendors extends javax.swing.JFrame {
                                 .addComponent(jScrollPane2))
                             .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addGroup(jPanel3Layout.createSequentialGroup()
-                                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 341, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(categoryBox, javax.swing.GroupLayout.PREFERRED_SIZE, 341, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(addCategoryButton, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -276,7 +378,7 @@ public class Vendors extends javax.swing.JFrame {
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(removeCategoryButton, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 852, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 19, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -284,7 +386,7 @@ public class Vendors extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(12, 12, 12)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(categoryBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(addCategoryButton)
                     .addComponent(removeCategoryButton)
                     .addComponent(editCategoryButton))
@@ -320,16 +422,16 @@ public class Vendors extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())
+                        .addGap(266, 266, 266))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(searchField, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(19, 19, 19))))
+                        .addGap(275, 275, 275))))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(cloudPicLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -357,7 +459,7 @@ public class Vendors extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 1086, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -369,7 +471,7 @@ public class Vendors extends javax.swing.JFrame {
 
     private void editVendorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editVendorButtonActionPerformed
         // add from sql 
-        int ven = vendorsList.getSelectedIndex();
+        int ven = vendorsTable.getSelectedRow();
                 if(ven == -1) // if nothing selected
                     return;
         AddVendor addVendor = new AddVendor(null, null, true);
@@ -384,6 +486,20 @@ public class Vendors extends javax.swing.JFrame {
         addVendor.addListener(listener);
         addVendor.setVisible(true);
     }//GEN-LAST:event_addVendorButtonActionPerformed
+
+    private void categoryBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_categoryBoxItemStateChanged
+        if(categoryBox.getSelectedIndex() == 0)
+        {
+            editCategoryButton.setVisible(false);
+            removeCategoryButton.setVisible(false);
+        }
+        else
+        {
+            editCategoryButton.setVisible(true);
+            removeCategoryButton.setVisible(true);
+        }
+        loadProductTable();
+    }//GEN-LAST:event_categoryBoxItemStateChanged
 
     /**
      * @param args the command line arguments
@@ -419,7 +535,8 @@ public class Vendors extends javax.swing.JFrame {
             }
         });
     }
-    private DefaultListModel listModel;
+    private DefaultTableModel productsTableModel;
+    private DefaultTableModel vendorsTableModel;
     private String command;
     private Connection localConnection;
     private Connection serverConnection;
@@ -429,13 +546,13 @@ public class Vendors extends javax.swing.JFrame {
     private javax.swing.JButton addCategoryButton;
     private javax.swing.JButton addProductButton;
     private javax.swing.JButton addVendorButton;
+    private javax.swing.JComboBox<String> categoryBox;
     private javax.swing.JLabel cloudPicLabel;
     private javax.swing.JTextField costField;
     private javax.swing.JTextPane descriptionField;
     private javax.swing.JButton editCategoryButton;
     private javax.swing.JButton editProductButton;
     private javax.swing.JButton editVendorButton;
-    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -445,19 +562,19 @@ public class Vendors extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
-    private javax.swing.JTable jTable1;
     private javax.swing.JTextField nameField;
+    private javax.swing.JTable productsTable;
     private javax.swing.JButton removeCategoryButton;
     private javax.swing.JButton removeProdutButton;
     private javax.swing.JButton removeVendorButton;
     private javax.swing.JTextField searchField;
     private javax.swing.JComboBox<String> taxBox;
-    private javax.swing.JList<String> vendorsList;
+    private javax.swing.JTable vendorsTable;
     // End of variables declaration//GEN-END:variables
 }
