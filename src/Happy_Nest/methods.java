@@ -1,20 +1,38 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package Happy_Nest;
 
-/**
- *
- * @author Yunix
- */
-public class methods {
+import java.awt.Component;
+import javax.swing.JOptionPane;
+import java.util.Date; 
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        // TODO code application logic here
+
+
+public abstract class methods {
+
+    // <editor-fold defaultstate="collapsed" desc="Helpful methods (isFloat, okcancel)">
+    
+    public static boolean isFloat(String text)
+    {
+        boolean p = false; // for the dot or comma
+        for(int i = 0; i < text.length(); i++)
+        {
+            if (text.charAt(i) == '.')
+            {
+                if (p)
+                    return false;
+                p = true;
+            }
+            else if (!(text.charAt(i) >= '0' && text.charAt(i) <= '9'))
+                return false;
+        }
+        return true;
     }
+    
+    public static int okcancel(String theMessage) 
+    {
+        int result = JOptionPane.showConfirmDialog((Component) null, theMessage,
+        "Alert", JOptionPane.OK_CANCEL_OPTION);
+        return result;
+    }
+    // </editor-fold>
 }
