@@ -23,6 +23,7 @@ public class Vendors extends javax.swing.JFrame {
 
         editCategoryButton.setVisible(false);
         removeCategoryButton.setVisible(false);
+        
     }
 
     public void initTable() {
@@ -43,6 +44,9 @@ public class Vendors extends javax.swing.JFrame {
 
         productsTable.getColumnModel().getColumn(5).setMinWidth(0);
         productsTable.getColumnModel().getColumn(5).setMaxWidth(0);
+        
+        vendorsTable.getColumnModel().getColumn(1).setMinWidth(0);
+        vendorsTable.getColumnModel().getColumn(1).setMaxWidth(0);
     }
 
     public void loadCategories() {
@@ -51,12 +55,12 @@ public class Vendors extends javax.swing.JFrame {
 
         categoryBox.addItem("All Products");
         categoryBox.setSelectedIndex(0);
-        f++;
-        descriptionField.setText(Integer.toString(f) + "SelectedID = " + Integer.toString(vendorsTable.getSelectedRow()));
+        
+        //descriptionField.setText(Integer.toString(f) + "SelectedID = " + Integer.toString(vendorsTable.getSelectedRow()));
         if (vendorsTable.getSelectedRow() != -1) {
             command = "select categName from categories where categories.supplierID = "
                     + Integer.toString((int) vendorsTable.getModel().getValueAt(vendorsTable.getSelectedRow(), 1));
-            descriptionField.setText(command);
+            //descriptionField.setText(command);
             try {
                 resultSet = stmt.executeQuery(command);
 
@@ -87,7 +91,7 @@ public class Vendors extends javax.swing.JFrame {
                         + " order by products.productName";
             }
 
-            descriptionField.setText(command);
+            //descriptionField.setText(command);
             resultSet = stmt.executeQuery(command);
 
             productsTableModel = (DefaultTableModel) productsTable.getModel();
@@ -101,7 +105,7 @@ public class Vendors extends javax.swing.JFrame {
                     
                     resultSet.getString("productName"),
                     resultSet.getFloat("productPrice"),
-                    resultSet.getFloat("productTax") * 100,
+                    resultSet.getFloat("productTax"),
                     resultSet.getFloat("productFinalPrice"),
                     String.valueOf(aDate.getDate()) +
                     "/" +
@@ -166,7 +170,7 @@ public class Vendors extends javax.swing.JFrame {
                     stmt.executeUpdate(command);
                 } catch (SQLException ex) {
                     Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, "Can't add vendor\n" + ex);
-                    descriptionField.setText(command);
+                    //descriptionField.setText(command);
                 }
             }
             loadVendorsList();
@@ -336,6 +340,11 @@ public class Vendors extends javax.swing.JFrame {
         jLabel3.setText("Search:");
 
         descriptionField.setBorder(javax.swing.BorderFactory.createTitledBorder("Description"));
+        descriptionField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                descriptionFieldFocusGained(evt);
+            }
+        });
         jScrollPane2.setViewportView(descriptionField);
 
         categoryBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All Products", "something" }));
@@ -566,10 +575,20 @@ public class Vendors extends javax.swing.JFrame {
         {
             return;
         }
-        AddVendor addVendor = new AddVendor(null, null, true);
-        PassVendor listener = new Vendors.AddToList();
-        addVendor.addListener(listener);
-        addVendor.setVisible(true);
+        command = "select * from suppliers where supplierID = "
+                + Integer.toString((int) vendorsTable.getModel().getValueAt(vendorsTable.getSelectedRow(), 1));
+        try {
+            resultSet = stmt.executeQuery(command);
+            if (resultSet.next()) {
+                AddVendor addVendor = new AddVendor(resultSet.getString("supplierName"), resultSet.getString("supplierDesc"), true);
+                PassVendor listener = new Vendors.AddToList();
+                addVendor.addListener(listener);
+                addVendor.setVisible(true);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
     }//GEN-LAST:event_editVendorButtonActionPerformed
 
     private void addVendorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addVendorButtonActionPerformed
@@ -627,17 +646,50 @@ public class Vendors extends javax.swing.JFrame {
     }//GEN-LAST:event_vendorsTableMouseClicked
 
     private void addProductButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addProductButtonActionPerformed
+        
         String pname = nameField.getText();
         String pdesc = descriptionField.getText();
+        
         if (!methods.isFloat(costField.getText())) {
             JOptionPane.showMessageDialog(new JLabel(), "Error", "Incorrect value in Cost Field", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        
         float pcost = Float.parseFloat(costField.getText());
-        String stax = taxBox.getSelectedItem().toString();
+        String stax = taxBox.getSelectedItem().toString().substring(0, taxBox.getSelectedItem().toString().length() - 1);
 
         JOptionPane.showMessageDialog(new JLabel(), stax);
-        float tax = Float.parseFloat(taxBox.getSelectedItem().toString());
+        float tax = Float.parseFloat(stax);
+        /*
+        create table products (
+	productID int not null auto_increment,
+        productName varchar(30),
+        productDesc varchar(450),
+        productEntryDate bigint,
+        productPrice float,
+        productTax int,
+        productFinalPrice float,
+        supplierID int,
+        categName varchar(30),
+        primary key (productID),
+        */
+        command = "insert into products values ( 0 , "
+                + "'" + pname + "' , "
+                + "'" + pdesc + "' , "
+                + Long.toString(System.currentTimeMillis()) + " , "
+                + Float.toString(pcost) + " , "
+                + stax + " , "
+                + Float.toString(pcost + (pcost * tax) / 100) + " , "
+                + Integer.toString((int) vendorsTable.getModel().getValueAt(vendorsTable.getSelectedRow(), 1)) + " , "
+                + "'" + categoryBox.getSelectedItem() + "' )";
+        
+        descriptionField.setText(command);
+        try {
+            stmt.execute(command);
+        } catch (SQLException ex) {
+            Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        loadProductTable();
     }//GEN-LAST:event_addProductButtonActionPerformed
 
     private void addCategoryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addCategoryButtonActionPerformed
@@ -646,6 +698,7 @@ public class Vendors extends javax.swing.JFrame {
         if (index == -1) {
             return;
         }
+        
         String catName = JOptionPane.showInputDialog("Enter category name:");
         command = "insert into categories values(\'"
                 + catName
@@ -661,22 +714,66 @@ public class Vendors extends javax.swing.JFrame {
     }//GEN-LAST:event_addCategoryButtonActionPerformed
 
     private void editCategoryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editCategoryButtonActionPerformed
-        command = "update categories where ";
-        System.out.println("Item is " + categoryBox.getItemAt(categoryBox.getSelectedIndex()));
-        nameField.setEnabled(false);
+        if(categoryBox.getSelectedIndex() == 0) {
+            JOptionPane.showMessageDialog(new JLabel(), "Can't change 'All products' category");
+            return;
+        }
+        String categName = JOptionPane.showInputDialog( "Enter category name:" );
+        
+        if (categName.equals("")) {
+            JOptionPane.showMessageDialog(new JLabel(), "Enter correct category name");
+            return;
+        }
+        
+        if (methods.okcancel("Category name will be changed for all Vendors\nAre you sure you want to rename it?") != 0) {
+            return;
+        }
+        
+        command = "update categories set categName = '"
+                + categName
+                + "' where categName = '"
+                + categoryBox.getSelectedItem()
+                + "'";
+        try {
+            stmt.executeUpdate(command);
+            //System.out.println("Item is " + categoryBox.getItemAt(categoryBox.getSelectedIndex()));
+            //nameField.setEnabled(false);
+            loadCategories();
+        } catch (SQLException ex) {
+            Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(new JLabel(), "Something went wrong, check if category name already exists");
+        }
 
     }//GEN-LAST:event_editCategoryButtonActionPerformed
 
     private void productsTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_productsTableMouseClicked
+        //editCategoryButton.setVisible(true);
+        //removeCategoryButton.setVisible(true);
+        nameField.setEnabled(true);
+        costField.setEnabled(true);
+        addProductButton.setEnabled(true);
+        editProductButton.setEnabled(true);
+        editProductButton.setVisible(true);
+        removeProductButton.setEnabled(true);
+        removeProductButton.setVisible(true);
+        taxBox.setEnabled(true);
         command = "select * from products where productID = "
-                + Integer.toString((int) vendorsTable.getModel().getValueAt(vendorsTable.getSelectedRow(), 1));
+                + Integer.toString((int) productsTable.getModel().getValueAt(productsTable.getSelectedRow(), 5));
+                //Integer.toString((int) vendorsTable.getModel().getValueAt(vendorsTable.getSelectedRow(), 1));
+        //descriptionField.setText("Sasas");
         try {
             resultSet = stmt.executeQuery(command);
-            descriptionField.setText(resultSet.getString("productDesc"));
+            if(resultSet.next())
+                descriptionField.setText(resultSet.getString("productDesc"));
         } catch (SQLException ex) {
             Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, ex);
         }
+        //descriptionField.setText(command);
     }//GEN-LAST:event_productsTableMouseClicked
+
+    private void descriptionFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_descriptionFieldFocusGained
+        descriptionField.select(0, descriptionField.getText().length());
+    }//GEN-LAST:event_descriptionFieldFocusGained
 
     /**
      * @param args the command line arguments
