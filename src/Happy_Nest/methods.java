@@ -10,6 +10,11 @@ import java.util.Date;
 public abstract class methods {
 
     // <editor-fold defaultstate="collapsed" desc="Helpful methods (isFloat, okcancel)">
+
+    /**
+     *
+     */
+    
     
     public static boolean isFloat(String text)
     {
