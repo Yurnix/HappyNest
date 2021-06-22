@@ -96,6 +96,7 @@ public class Vendor
         String.valueOf(creation_date.getMonth() + 1) +
         "/" +
         String.valueOf(creation_date.getYear() + 1900);
+        
     }
     
     public void setName(String sname)

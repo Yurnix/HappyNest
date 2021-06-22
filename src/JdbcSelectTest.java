@@ -47,8 +47,8 @@ public class JdbcSelectTest {
             
             //supplierID 	supplierName 	supplierDesc 	supplierEntryDate 
             command = "insert into suppliers values ("
-                    + "1,"
-                    + "\"Yuri\","
+                    + "2,"
+                    + "\"Pougian\","
                     + "\"The desc works\","
                     + "20002929221)";
             System.out.println(command);

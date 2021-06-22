@@ -9,12 +9,22 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.DosFileAttributes;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
@@ -32,6 +42,7 @@ public class Settings extends javax.swing.JFrame {
         jPasswordField1.setText("password");
         jPasswordField2.setText("password");
         jPasswordField3.setText("password");
+        
     }
 
     /**
@@ -55,6 +66,10 @@ public class Settings extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         jCheckBox1 = new javax.swing.JCheckBox();
         jButton1 = new javax.swing.JButton();
+        exrportButton = new javax.swing.JButton();
+        importButton = new javax.swing.JButton();
+        backupField = new javax.swing.JTextField();
+        jLabel6 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -171,19 +186,60 @@ public class Settings extends javax.swing.JFrame {
             .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
+        exrportButton.setText("Export Database");
+        exrportButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exrportButtonActionPerformed(evt);
+            }
+        });
+
+        importButton.setText("Import Database");
+        importButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                importButtonActionPerformed(evt);
+            }
+        });
+
+        backupField.setText("./");
+        backupField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                backupFieldFocusGained(evt);
+            }
+        });
+
+        jLabel6.setText("Backup location: ");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(exrportButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(importButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(backupField)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(exrportButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(importButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(backupField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -277,6 +333,55 @@ public class Settings extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(new JLabel(), "Password changed");
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void exrportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exrportButtonActionPerformed
+        path = backupField.getText();
+        if(path.equals(""))
+            if(methods.okcancel("Are you sure you want to import from working diretory?") != 0)
+                return;
+            else
+                path = "./";
+        if(!methods.exportToCSV(path))
+            JOptionPane.showMessageDialog(
+                    new JLabel(),
+                    "Error while exporting database\nContact support",
+                    "Backup error",
+                    JOptionPane.ERROR_MESSAGE);
+        else
+            JOptionPane.showMessageDialog(
+                    new JLabel(),
+                    "Backup complete successfully to:\n" + path,
+                    "Export complete",
+                    JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_exrportButtonActionPerformed
+
+    private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
+        path = backupField.getText();
+        if(path.equals(""))
+            if(methods.okcancel("Are you sure you want to import from working diretory?") != 0)
+                return;
+            else
+                path = "./";
+        if(methods.okcancel("Are you sure you want to import from backup? Previous data will be deleted") != 0)
+            return;
+        if(!methods.importFromCSV(path))
+            JOptionPane.showMessageDialog(
+                    new JLabel(),
+                    "Error while importing database\nContact support",
+                    "Backup error",
+                    JOptionPane.ERROR_MESSAGE);
+        else
+            JOptionPane.showMessageDialog(
+                    new JLabel(),
+                    "Backup imported successfully to:\n" + path,
+                    "Import complete",
+                    JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_importButtonActionPerformed
+
+    private void backupFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_backupFieldFocusGained
+        if(backupField.getText().length() != 0)
+            backupField.select(0, backupField.getText().length());
+    }//GEN-LAST:event_backupFieldFocusGained
+
     private static void setHiddenAttrib(Path filePath) {
         try {
             DosFileAttributes attr = Files.readAttributes(filePath, DosFileAttributes.class);
@@ -324,8 +429,12 @@ public class Settings extends javax.swing.JFrame {
             }
         });
     }
-
+    
+    private static String path;
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField backupField;
+    private javax.swing.JButton exrportButton;
+    private javax.swing.JButton importButton;
     private javax.swing.JButton jButton1;
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JLabel jLabel1;
@@ -333,6 +442,7 @@ public class Settings extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPasswordField jPasswordField1;
