@@ -1,17 +1,15 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Happy_Nest;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
+import java.util.Scanner;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,15 +17,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author Yunix
- */
+
 public class FinanceReview extends javax.swing.JFrame {
 
-    /**
-     * Creates new form FinanceReview
-     */
     public FinanceReview() {
         initComponents();
         initLocalConnection();
@@ -35,21 +27,22 @@ public class FinanceReview extends javax.swing.JFrame {
         resultModel = (DefaultTableModel) resultTable.getModel();
         loadCalendar();
         
-        resultTable.getColumnModel().getColumn(0).setMinWidth(200);
-        resultTable.getColumnModel().getColumn(0).setMaxWidth(200);
+        resultTable.getColumnModel().getColumn(0).setMinWidth(100);
+        resultTable.getColumnModel().getColumn(0).setMaxWidth(150);
+        resultTable.getColumnModel().getColumn(0).setPreferredWidth(150);
         holdTo = 0; // for the result table
         try {
             
-            incomeCategories = new Vector < String > ();
+            incomeCategories = new Vector < String > (); //faster than sql requests
             outcomeCategories = new Vector < String > ();
             
-            command = "select category from expencesIncome";
+            command = "select category from expencesIncome"; //load income categories
             resultSet = stmt.executeQuery(command);
             while (resultSet.next()) {
                 incomeCategories.add(resultSet.getString("category"));
             }
             
-            command = "select category from expencesOutcome";
+            command = "select category from expencesOutcome"; //load outcome categories
             resultSet = stmt.executeQuery(command);
             while (resultSet.next()) {
                 outcomeCategories.add(resultSet.getString("category"));
@@ -58,46 +51,57 @@ public class FinanceReview extends javax.swing.JFrame {
         } catch (SQLException ex) {
             Logger.getLogger(FinanceReview.class.getName()).log(Level.SEVERE, null, ex);
         }
-       
-        
         //resultTable.getModel().setValueAt( "<html>Text color: <font color='red'>red</font></html>", 0, 0);
         
     }
 
     private void initLocalConnection() {
         try {
-            Connection localConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbHappyNest?", "root", "ebisonovsekonem");
+            String login = "";
+            String password = "";
+            File dbCreds = new File("dbCreds.txt");
+            if(dbCreds.exists())
+            {
+                Scanner input = new Scanner(dbCreds);
+                CryptoCSV.resetCounter();
+                login = (input.hasNextLine()?CryptoCSV.decrypt(input.nextLine()):"root");
+                password = (input.hasNextLine()?CryptoCSV.decrypt(input.nextLine()):"password");
+                input.close();
+                
+            }
+            Connection localConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbHappyNest?", login, password);
             stmt = localConnection.createStatement();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(new JLabel(), "Error while connecting to database\nContact support", "Connection error", JOptionPane.ERROR_MESSAGE);
             Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, ex);
-            super.dispose();
+            this.dispose();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(FinanceReview.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-    private void clearCalendarTable() {
+    private void clearCalendarTable() { //removes every row in calendar table
         while (calendarModel.getRowCount() > 0) {
             calendarModel.removeRow(0);
         }
         return;
     }
     
-    private void clearResultTable() {
+    private void clearResultTable() { // removes every row in result table
         while (resultModel.getRowCount() > holdTo) {
             resultModel.removeRow(resultModel.getRowCount() - 1);
         }
         return;
     }
     
-    private void loadCalendar() {
-        //calendar.setTimeInMillis(System.currentTimeMillis());
-        //System.out.print(aDate.getDate());
+    private void loadCalendar() { //loads dates depending on scale
+        
         int aDay = 0;
         if ((aDate.getYear() + 1900) % 400 == 0 || ((aDate.getYear() + 1900) % 4 == 0 && (aDate.getYear() + 1900) % 100 != 0)) {
             aDay = 1;
         }
         clearCalendarTable();
-        if (scaleBox.getSelectedIndex() == 0) {
+        if (scaleBox.getSelectedIndex() == 0) { // daily scale
             for (int i = 1; i <= daysInMonth[aDate.getMonth()] + (aDate.getMonth() == 1 ? aDay : 0); i++) {
                 calendarModel.addRow(new Object[]{
                     String.valueOf(i)
@@ -106,29 +110,30 @@ public class FinanceReview extends javax.swing.JFrame {
                     + "/"
                     + String.valueOf(aDate.getYear() + 1900)});
             }
-        } else if (scaleBox.getSelectedIndex() == 1) {
+        } else if (scaleBox.getSelectedIndex() == 1) { // monthly scale
             for (int i = 0; i < 12; i++) {
                 calendarModel.addRow(new Object[]{
                     months[i] + "/" + (aDate.getYear() + 1900)
                 });
             }
-            calendarTable.setRowSelectionInterval(0, 0);
+            calendarTable.setRowSelectionInterval(0, 0); // select first month
         }
-        else {
+        else { // anually scale
             try {
                 int imin = -1;
-                command = "select min(iyear) from income";
+                command = "select min(iyear) from income"; // find the earliest record depending on year from income table
                 resultSet = stmt.executeQuery(command);
                 if(resultSet.next()) {
                     imin = resultSet.getInt("min(iyear)");
                 }
-                command = "select min(iyear) from outcome";
+                command = "select min(iyear) from outcome"; // find the earliest record depending on year from outcome table
                 resultSet = stmt.executeQuery(command);
                 if(resultSet.next()) {
-                    imin = methods.min(resultSet.getInt("min(iyear)"),imin);
+                    imin = Methods.min(resultSet.getInt("min(iyear)"),imin);
                 }
-                int year = aDate.getYear() + 1900;
-                for (int i = imin; i <= year; i++) {
+                int year = aDate.getYear() + 1900; 
+                annualStart = imin;
+                for (int i = imin; i <= year; i++) { // load from the earliest to the present year
                 calendarModel.addRow(new Object[]{
                     i
                 });
@@ -158,7 +163,7 @@ public class FinanceReview extends javax.swing.JFrame {
         holdRecordsButton = new javax.swing.JButton();
         releaseRecordsButton = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         calendarTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -334,7 +339,7 @@ public class FinanceReview extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void scaleBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scaleBoxActionPerformed
-        if(scaleBox.getSelectedIndex() == 2) {
+        if(scaleBox.getSelectedIndex() == 2) { //if selection is annual deactivate back / forward buttons
             goBackButton.setEnabled(false);
             goForwordButton.setEnabled(false);
             aDate.setTime(System.currentTimeMillis());
@@ -342,23 +347,23 @@ public class FinanceReview extends javax.swing.JFrame {
             goBackButton.setEnabled(true);
             goForwordButton.setEnabled(true);
         }
-        loadCalendar();
+        loadCalendar(); // load calendar table depending on scale
     }//GEN-LAST:event_scaleBoxActionPerformed
 
     private void goBackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goBackButtonActionPerformed
-        if (scaleBox.getSelectedIndex() == 0) {
-            aDate.setMonth(aDate.getMonth() - 1);
+        if (scaleBox.getSelectedIndex() == 0) { 
+            aDate.setMonth(aDate.getMonth() - 1); //month back
         } else {
-            aDate.setYear(aDate.getYear() - 1);
+            aDate.setYear(aDate.getYear() - 1); //year back
         }
         loadCalendar();
     }//GEN-LAST:event_goBackButtonActionPerformed
 
     private void goForwordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goForwordButtonActionPerformed
         if (scaleBox.getSelectedIndex() == 0) {
-            aDate.setMonth(aDate.getMonth() + 1);
+            aDate.setMonth(aDate.getMonth() + 1);//month forward
         } else {
-            aDate.setYear(aDate.getYear() + 1);
+            aDate.setYear(aDate.getYear() + 1);//year forward
         }
         loadCalendar();
     }//GEN-LAST:event_goForwordButtonActionPerformed
@@ -369,6 +374,7 @@ public class FinanceReview extends javax.swing.JFrame {
         float total_income = 0,total_outcome = 0, net = 0, income, outcome, temp;
         Date tempDate = new Date();
         int first = -1, last = -1;
+        text = infoHoldTo;
         try {
             if(scaleBox.getSelectedIndex() == 0) { // daily
                 first = calendarTable.getSelectedRow() + 1;
@@ -411,7 +417,7 @@ public class FinanceReview extends javax.swing.JFrame {
                             + "'>"
                             + (income - outcome) + "</font></html>"});
                 }
-                // information by categories
+                
                 if (first != last)
                     resultModel.addRow(new Object[]{
                         "<html><font color='blue'>" 
@@ -427,8 +433,9 @@ public class FinanceReview extends javax.swing.JFrame {
                         + (total_income - total_outcome) + "</font></html>"
                     });
                 
-                
-                text = ((first == last) 
+                //=============================== INFORMATION AREA =============================
+                income = outcome = 0;
+                text += ((first == last) 
                         ? calendarModel.getValueAt(first - 1, 0)
                         : calendarModel.getValueAt(first - 1, 0) + " - " + calendarModel.getValueAt(last - 1, 0))
                         + "\n\nIncome:";
@@ -448,11 +455,18 @@ public class FinanceReview extends javax.swing.JFrame {
                     temp = 0;
                     if(resultSet.next())
                         temp = resultSet.getFloat("sum(amount)");
-                    income += temp;
-                    if(temp != 0)
-                        text += "\n" + incomeCategories.get(i) + ": " + temp;
+                    
+                    if(temp != 0) {
+                        income += temp;
+                        //JOptionPane.showMessageDialog(new JLabel(), command);
+                        text += "\n    " + incomeCategories.get(i) + ": " + temp;
+                    }
                 }
-                text += "\n...other: " + (total_income - income);
+                if(total_income == 0)
+                    text += "\nNo income at this period.";
+                if(total_income != income)
+                    text += "\n    ...other: " + (total_income - income);
+                
                 
                 text += "\n\nOutcome:";
                 outcome = 0;
@@ -472,13 +486,18 @@ public class FinanceReview extends javax.swing.JFrame {
                     temp = 0;
                     if(resultSet.next())
                         temp = resultSet.getFloat("sum(amount)");
-                    outcome += temp;
-                    if(temp != 0)
-                        text += "\n" + outcomeCategories.get(i) + ": " + temp;
-                }
-                text += "\n...other: " + (total_outcome - outcome);
-                infoPane.setText(text);
                     
+                    if(temp != 0) {
+                        outcome += temp;
+                        text += "\n    " + outcomeCategories.get(i) + ": " + temp;
+                    }
+                }
+                
+                if(total_outcome == 0)
+                    text += "\nNo outcome at this period.";
+                if(total_outcome != outcome)
+                    text += "\n    ...other: " + (total_outcome - outcome);
+                infoPane.setText(text);
             }
             else if(scaleBox.getSelectedIndex() == 1) { // monthly
                 
@@ -534,8 +553,8 @@ public class FinanceReview extends javax.swing.JFrame {
                         + (total_income - total_outcome) + "</font></html>"
                     });
                 
-                
-                text = ((first == last) 
+                income = outcome = 0;
+                text += ((first == last) 
                         ? calendarModel.getValueAt(first - 1, 0)
                         : calendarModel.getValueAt(first - 1, 0) + " - " + calendarModel.getValueAt(last - 1, 0))
                         + "\n\nIncome:";
@@ -553,11 +572,16 @@ public class FinanceReview extends javax.swing.JFrame {
                     temp = 0;
                     if(resultSet.next())
                         temp = resultSet.getFloat("sum(amount)");
-                    income += temp;
-                    if(temp != 0)
-                        text += "\n" + incomeCategories.get(i) + ": " + temp;
+                    
+                    if(temp != 0) {
+                        income += temp;
+                        text += "\n    " + incomeCategories.get(i) + ": " + temp;
+                    }
                 }
-                text += "\n...other: " + (total_income - income);
+                if(total_income == 0)
+                    text += "\nNo income at this period.";
+                if(total_income != income)
+                    text += "\n    ...other: " + (total_income - income);
                 
                 text += "\n\nOutcome:";
                 outcome = 0;
@@ -575,40 +599,49 @@ public class FinanceReview extends javax.swing.JFrame {
                     temp = 0;
                     if(resultSet.next())
                         temp = resultSet.getFloat("sum(amount)");
-                    outcome += temp;
-                    if(temp != 0)
-                        text += "\n" + outcomeCategories.get(i) + ": " + temp;
+                    
+                    if (temp != 0) {
+                        outcome += temp;
+                        text += "\n    " + outcomeCategories.get(i) + ": " + temp;
+                    }
                 }
-                text += "\n...other: " + (total_outcome - outcome);
+                if(total_outcome == 0)
+                    text += "\nNo outcome at this period.";
+                if(total_outcome != outcome)
+                    text += "\n    ...other: " + (total_outcome - outcome);
                 infoPane.setText(text);
                 
             }
-            else { // annualy
-                first = calendarTable.getSelectedRow();
-                last = calendarTable.getSelectedRow() + calendarTable.getSelectedRowCount() - 1;
-                income = outcome = 0;
+            else { 
+
+                // annualy
+                if(calendarTable.getSelectedRow() == -1)
+                    return;
                 clearResultTable();
-                int first_year = Integer.parseInt(calendarTable.getValueAt(first, 0).toString());
+                first = annualStart + calendarTable.getSelectedRow();
+                last = first + calendarTable.getSelectedRowCount() - 1;
+                income = outcome = 0;
                 for (int i = first; i <= last; i++) {
                     // ===================== Get from income ==========================
                     command = "select sum(amount) from income where iyear = "
-                            + (first_year + i);
+                            + i;
                     resultSet = stmt.executeQuery(command);
                     if(resultSet.next()) {
                         income = resultSet.getFloat("sum(amount)");
                     }
                     // ===================== Get from outcome ==========================
                     command = "select sum(amount) from outcome where iyear = "
-                            + (first_year + i);
+                            + i;
                     resultSet = stmt.executeQuery(command);
                     if(resultSet.next()) {
                         outcome = resultSet.getFloat("sum(amount)");
                     }
                     total_income += income;
                     total_outcome += outcome;
+                    
                     if (!(income == 0 && outcome == 0))
                         resultModel.addRow(new Object[]{
-                            calendarModel.getValueAt(i, 0),
+                            i,
                             "<html><font color='green'>" + income + "</font></html>",
                             "<html><font color='red'>" + outcome + "</font></html>",
                             "<html><font color='"
@@ -616,13 +649,14 @@ public class FinanceReview extends javax.swing.JFrame {
                             + "'>"
                             + (income - outcome) + "</font></html>"});
                 }
+                
                 // information by categories
                 if (first != last)
                     resultModel.addRow(new Object[]{
                         "<html><font color='blue'>" 
-                                + calendarModel.getValueAt(first, 0) 
+                                + first
                                 + " - " 
-                                + calendarModel.getValueAt(last, 0) 
+                                + last
                                 + "</font></html>",
                         "<html><font color='green'>" + total_income + "</font></html>",
                         "<html><font color='red'>" + total_outcome + "</font></html>",
@@ -632,16 +666,16 @@ public class FinanceReview extends javax.swing.JFrame {
                         + (total_income - total_outcome) + "</font></html>"
                     });
                 
-                
-                text = ((first == last) 
-                        ? calendarModel.getValueAt(first, 0)
-                        : calendarModel.getValueAt(first, 0) + " - " + calendarModel.getValueAt(last, 0))
+                income = outcome = 0;
+                text += ((first == last) 
+                        ? first
+                        : first + " - " + last)
                         + "\n\nIncome:";
                 for(int i = 0; i < incomeCategories.size(); i++) {
                     command = "select sum(amount) from income where iyear >= "
-                            + first_year
+                            + first
                             + " and iyear <= "
-                            + (first_year + last)
+                            + last
                             + " and iname = '"
                             + incomeCategories.get(i)
                             + "'";
@@ -649,19 +683,22 @@ public class FinanceReview extends javax.swing.JFrame {
                     temp = 0;
                     if(resultSet.next())
                         temp = resultSet.getFloat("sum(amount)");
-                    income += temp;
-                    if(temp != 0)
-                        text += "\n" + incomeCategories.get(i) + ": " + temp;
+                    
+                    if(temp != 0) { income += temp;
+                        text += "\n    " + incomeCategories.get(i) + ": " + temp;
+                    }
                 }
-                text += "\n...other: " + (total_income - income);
+                if(total_income == 0)
+                    text += "\nNo income at this period.";
+                if(total_income != income)
+                    text += "\n    ...other: " + (total_income - income);
                 
                 text += "\n\nOutcome:";
-                outcome = 0;
                 for(int i = 0; i < outcomeCategories.size(); i++) {
                     command = "select sum(amount) from outcome where iyear >= "
-                            + first_year
+                            + first
                             + " and iyear <= "
-                            + (first_year + last)
+                            + last
                             + " and iname = '"
                             + outcomeCategories.get(i)
                             + "'";
@@ -669,11 +706,15 @@ public class FinanceReview extends javax.swing.JFrame {
                     temp = 0;
                     if(resultSet.next())
                         temp = resultSet.getFloat("sum(amount)");
-                    outcome += temp;
-                    if(temp != 0)
-                        text += "\n" + outcomeCategories.get(i) + ": " + temp;
+                    
+                    if(temp != 0) { outcome += temp;
+                        text += "\n    " + outcomeCategories.get(i) + ": " + temp;
+                    }
                 }
-                text += "\n...other: " + (total_outcome - outcome);
+                if(total_outcome == 0)
+                    text += "\nNo outcome at this period.";
+                if(total_outcome != outcome)
+                    text += "\n    ...other: " + (total_outcome - outcome);
                 infoPane.setText(text);
                 
             }
@@ -683,17 +724,29 @@ public class FinanceReview extends javax.swing.JFrame {
     }//GEN-LAST:event_calendarTableMouseReleased
 
     private void holdRecordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_holdRecordsButtonActionPerformed
+        //previous hold index, used to colour only new records
         int prevHold = holdTo;
         holdTo = resultTable.getRowCount();
-        for(int i = prevHold; i < holdTo; i++)
-            if(resultModel.getValueAt(i, 0).toString().charAt(0) != '<')
-            resultModel.setValueAt("<html><font color='orange'>" + resultModel.getValueAt(i, 0) + "</font></html>", i, 0);
-            
+        //check if text already contains a ========= bar
+
+        infoHoldTo = infoPane.getText();
+        if (!infoHoldTo.isEmpty()) {
+            infoHoldTo += (infoHoldTo.charAt(infoHoldTo.length() - 1) != '=' ? "\n==============================\n\n" : "");
+        }
+        for (int i = prevHold; i < holdTo; i++) {
+            if (resultModel.getValueAt(i, 0).toString().charAt(0) != '<') //check if record starts with html code
+            {
+                resultModel.setValueAt("<html><font color='orange'>" + resultModel.getValueAt(i, 0) + "</font></html>", i, 0);
+            }
+        }
+
     }//GEN-LAST:event_holdRecordsButtonActionPerformed
 
     private void releaseRecordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_releaseRecordsButtonActionPerformed
-            holdTo = 0;
-            clearResultTable();
+        //release records 
+        holdTo = 0;
+        infoHoldTo = "";
+        clearResultTable();
     }//GEN-LAST:event_releaseRecordsButtonActionPerformed
 
     /**
@@ -759,6 +812,8 @@ public class FinanceReview extends javax.swing.JFrame {
     private ResultSet resultSet, resultSet1;
     private String command;
     private int holdTo;
+    private int annualStart;
+    private String infoHoldTo = "";
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable calendarTable;
     private javax.swing.JButton goBackButton;

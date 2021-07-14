@@ -42,7 +42,23 @@ public class Settings extends javax.swing.JFrame {
         jPasswordField1.setText("password");
         jPasswordField2.setText("password");
         jPasswordField3.setText("password");
-        
+
+        File defaultPath = new File("backupPath.txt");
+        if (defaultPath.exists()) {
+            try {
+                Scanner input = new Scanner(defaultPath);
+                if (input.hasNextLine()) {
+                    defaultBackupField.setText(input.nextLine());
+                }
+                if (input.hasNextLine()) {
+                    daysField.setText(input.nextLine());
+                }
+
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Settings.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
     }
 
     /**
@@ -70,8 +86,23 @@ public class Settings extends javax.swing.JFrame {
         importButton = new javax.swing.JButton();
         backupField = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
+        defaultBackupButton = new javax.swing.JButton();
+        defaultBackupField = new javax.swing.JTextField();
+        daysField = new javax.swing.JTextField();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        jLabel10 = new javax.swing.JLabel();
+        jSeparator2 = new javax.swing.JSeparator();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        dbLoginField = new javax.swing.JTextField();
+        dbPasswordField = new javax.swing.JTextField();
+        changeDatabaseCredentialsButton = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jPanel1.setBackground(new java.awt.Color(102, 102, 102));
         jPanel1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED, new java.awt.Color(51, 51, 51), new java.awt.Color(51, 51, 51), new java.awt.Color(51, 51, 51), new java.awt.Color(51, 51, 51)));
@@ -172,7 +203,7 @@ public class Settings extends javax.swing.JFrame {
                     .addComponent(jCheckBox1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(24, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -209,29 +240,99 @@ public class Settings extends javax.swing.JFrame {
 
         jLabel6.setText("Backup location: ");
 
+        defaultBackupButton.setText("Change Backup Settings");
+        defaultBackupButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                defaultBackupButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel7.setText("Backup to:");
+
+        jLabel8.setText("Save for");
+
+        jLabel9.setText("days");
+
+        jLabel10.setText("Manual Backup");
+
+        jLabel11.setText("Server Settings");
+
+        jLabel12.setText("Database Login:");
+
+        jLabel13.setText("Database Password:");
+
+        changeDatabaseCredentialsButton.setText("Change Databese Credentials");
+        changeDatabaseCredentialsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                changeDatabaseCredentialsButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jSeparator1)
+            .addComponent(jSeparator2)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(exrportButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(importButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(changeDatabaseCredentialsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(backupField)))
+                        .addComponent(backupField))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel12)
+                        .addGap(26, 26, 26)
+                        .addComponent(dbLoginField))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel13)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(dbPasswordField))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(exrportButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(importButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(defaultBackupButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addComponent(jLabel7)
+                                        .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.LEADING))
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(daysField, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(jLabel9))
+                                        .addComponent(defaultBackupField))))
+                            .addComponent(jLabel10)
+                            .addComponent(jLabel11))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(jLabel11)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel12)
+                    .addComponent(dbLoginField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel13)
+                    .addComponent(dbPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(changeDatabaseCredentialsButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel10)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(exrportButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(importButton)
@@ -239,9 +340,22 @@ public class Settings extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(backupField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel6))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(defaultBackupField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(daysField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8)
+                    .addComponent(jLabel9))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(defaultBackupButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addGap(12, 12, 12))
         );
 
         pack();
@@ -304,7 +418,9 @@ public class Settings extends javax.swing.JFrame {
             while (input.hasNextLine())//Read the content of txt file
             {
                 password = input.nextLine();
-                System.out.println(password);
+                //CryptoCSV.resetCounter();
+                //password = CryptoCSV.decrypt(password);
+                //System.out.println(password);
             }
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Settings.class.getName()).log(Level.SEVERE, null, ex);
@@ -336,11 +452,11 @@ public class Settings extends javax.swing.JFrame {
     private void exrportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exrportButtonActionPerformed
         path = backupField.getText();
         if(path.equals(""))
-            if(methods.okcancel("Are you sure you want to import from working diretory?") != 0)
+            if(Methods.okcancel("Are you sure you want to import from working diretory?") != 0)
                 return;
             else
                 path = "./";
-        if(!methods.exportToCSV(path))
+        if(!Methods.exportToCSV(path))
             JOptionPane.showMessageDialog(
                     new JLabel(),
                     "Error while exporting database\nContact support",
@@ -357,13 +473,13 @@ public class Settings extends javax.swing.JFrame {
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
         path = backupField.getText();
         if(path.equals(""))
-            if(methods.okcancel("Are you sure you want to import from working diretory?") != 0)
+            if(Methods.okcancel("Are you sure you want to import from working diretory?") != 0)
                 return;
             else
                 path = "./";
-        if(methods.okcancel("Are you sure you want to import from backup? Previous data will be deleted") != 0)
+        if(Methods.okcancel("Are you sure you want to import from backup? Previous data will be deleted") != 0)
             return;
-        if(!methods.importFromCSV(path))
+        if(!Methods.importFromCSV(path))
             JOptionPane.showMessageDialog(
                     new JLabel(),
                     "Error while importing database\nContact support",
@@ -382,15 +498,67 @@ public class Settings extends javax.swing.JFrame {
             backupField.select(0, backupField.getText().length());
     }//GEN-LAST:event_backupFieldFocusGained
 
+    private void defaultBackupButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_defaultBackupButtonActionPerformed
+        try {
+            //String path;
+            File defaultPath = new File("backupPath.txt");
+            
+            if (!defaultPath.exists())
+                if (!defaultPath.createNewFile()) {
+                    JOptionPane.showMessageDialog(new JLabel(), "Can't create backupPath.txt");
+                    return;
+                }
+            
+            FileWriter write = new FileWriter(defaultPath);
+            write.write((defaultBackupField.getText().isBlank() ? ".\\" : defaultBackupField.getText()) +
+                    (defaultBackupField.getText().charAt(defaultBackupField.getText().length()-1) != '\\' ||
+                    defaultBackupField.getText().charAt(defaultBackupField.getText().length()-1) != '/' ?
+                    "\\" : "") +
+                    "\n"
+            );
+            //String a = (daysField.getText().isBlank() ? "5" : daysField.getText());
+            write.write((daysField.getText().isBlank() ? "5" : daysField.getText()));
+            write.close();
+
+        } catch (IOException ex) {
+            Logger.getLogger(Settings.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_defaultBackupButtonActionPerformed
+
+    private void changeDatabaseCredentialsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_changeDatabaseCredentialsButtonActionPerformed
+        FileWriter write = null;
+        try {
+            String login = dbLoginField.getText();
+            String password = dbPasswordField.getText();
+            File dbCreds = new File("dbCreds.txt");
+            if(!dbCreds.exists())
+                if(!dbCreds.createNewFile())
+                    JOptionPane.showMessageDialog(new JLabel(), "Can't create dbCreds.txt");
+            write = new FileWriter(dbCreds);
+            CryptoCSV.resetCounter();
+            write.write(CryptoCSV.encrypt(login) + "\n");
+            write.write(CryptoCSV.encrypt(password));
+        } catch (IOException ex) {
+            Logger.getLogger(Settings.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                write.close();
+                JOptionPane.showMessageDialog(new JLabel(), "Credentials changed");
+            } catch (IOException ex) {
+                Logger.getLogger(Settings.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_changeDatabaseCredentialsButtonActionPerformed
+
     private static void setHiddenAttrib(Path filePath) {
         try {
+            //make the password file hidden
             DosFileAttributes attr = Files.readAttributes(filePath, DosFileAttributes.class);
             System.out.println(filePath.getFileName() + " Hidden attribute is " + attr.isHidden());
             Files.setAttribute(filePath, "dos:hidden", true);
             attr = Files.readAttributes(filePath, DosFileAttributes.class);
             System.out.println(filePath.getFileName() + " Hidden attribute is " + attr.isHidden());
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -433,20 +601,35 @@ public class Settings extends javax.swing.JFrame {
     private static String path;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField backupField;
+    private javax.swing.JButton changeDatabaseCredentialsButton;
+    private javax.swing.JTextField daysField;
+    private javax.swing.JTextField dbLoginField;
+    private javax.swing.JTextField dbPasswordField;
+    private javax.swing.JButton defaultBackupButton;
+    private javax.swing.JTextField defaultBackupField;
     private javax.swing.JButton exrportButton;
     private javax.swing.JButton importButton;
     private javax.swing.JButton jButton1;
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPasswordField jPasswordField1;
     private javax.swing.JPasswordField jPasswordField2;
     private javax.swing.JPasswordField jPasswordField3;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
     // End of variables declaration//GEN-END:variables
 }

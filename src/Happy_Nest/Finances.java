@@ -1,5 +1,7 @@
 package Happy_Nest;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
@@ -92,12 +95,26 @@ public class Finances extends javax.swing.JFrame {
 
     private void initLocalConnection() {
         try {
-            Connection localConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbHappyNest?", "root", "ebisonovsekonem");
+            String login = "";
+            String password = "";
+            File dbCreds = new File("dbCreds.txt");
+            if(dbCreds.exists())
+            {
+                Scanner input = new Scanner(dbCreds);
+                CryptoCSV.resetCounter();
+                login = (input.hasNextLine()?CryptoCSV.decrypt(input.nextLine()):"root");
+                password = (input.hasNextLine()?CryptoCSV.decrypt(input.nextLine()):"password");
+                input.close();
+                JOptionPane.showMessageDialog(new JLabel(), login + "\n" + password);
+            }
+            Connection localConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbHappyNest?", login, password);
             stmt = localConnection.createStatement();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(new JLabel(), "Error while connecting to database\nContact support", "Connection error", JOptionPane.ERROR_MESSAGE);
             Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, ex);
-            super.dispose();
+            this.dispose();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(FinanceReview.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -110,7 +127,71 @@ public class Finances extends javax.swing.JFrame {
             return -1;
         }
     }
+    
+    private void searchAction() {
+        String text = searchField.getText();
+        if (text.equals("")) {
+            return;
+        }
+        while (incomeTable.getRowCount() != 0) {
+            incomeModel.removeRow(0);
+        }
+        while (outcomeTable.getRowCount() != 0) {
+            outcomeModel.removeRow(0);
+        }
+        String columns[] = {"iname", "idesc"};
+        int foundIncome = 0;
+        int foundOutcome = 0;
+        int id;
+        
+        try {
 
+            command = "select * from income where locate('" + text + "', iname) > 0 or locate('" + text + "', idesc) > 0 order by dateModified desc"; //desc order
+            resultSet = stmt.executeQuery(command);
+
+            while (resultSet.next()) {
+                foundIncome++;
+                //id = resultSet.getInt("incomeID");
+
+                incomeModel.addRow(new Object[]{
+                    resultSet.getString("iday") + "/"
+                    + resultSet.getString("imonth") + "/"
+                    + resultSet.getString("iyear") + ": "
+                    + resultSet.getString("iname"),
+                    resultSet.getFloat("amount"),
+                    resultSet.getInt("incomeID")
+                });
+            }
+
+            command = "select * from outcome where locate('" + text + "', iname) > 0 or locate('" + text + "', idesc) > 0 order by dateModified desc"; //desc order
+            resultSet = stmt.executeQuery(command);
+
+            while (resultSet.next()) {
+                foundOutcome++;
+                outcomeModel.addRow(new Object[]{
+                    resultSet.getString("iday") + "/"
+                    + resultSet.getString("imonth") + "/"
+                    + resultSet.getString("iyear") + ": "
+                    + resultSet.getString("iname"),
+                    resultSet.getFloat("amount"),
+                    resultSet.getInt("outcomeID")
+                });
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Finances.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        if(foundIncome > 0)
+            informationArea.setText("Found " + foundIncome + " income records");
+        else
+            informationArea.setText("No income records found");
+        
+        if(foundOutcome > 0)
+            informationArea.setText(informationArea.getText() + "\nFound " + foundOutcome + " outcome records");
+        else
+            informationArea.setText(informationArea.getText() + "\nNo outcome records found");
+    }
+    
     //get selected outcomeID
     private int getSelectedOutcome() {
         if (outcomeTable.getSelectedRow() != -1) {
@@ -154,7 +235,7 @@ public class Finances extends javax.swing.JFrame {
                 + (aDate.getMonth() + 1)
                 + " and iyear = "
                 + (aDate.getYear() + 1900);
-        System.out.println(command);
+        //System.out.println(command);
         try {
             resultSet = stmt.executeQuery(command);
             while (resultSet.next()) {
@@ -222,12 +303,11 @@ public class Finances extends javax.swing.JFrame {
         informationArea = new javax.swing.JTextArea();
         incomeButton = new javax.swing.JRadioButton();
         outcomeButton = new javax.swing.JRadioButton();
-        pushBox = new javax.swing.JCheckBox();
         manageCategories = new javax.swing.JButton();
         searchField = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Finances");
         setMinimumSize(new java.awt.Dimension(1000, 600));
 
@@ -309,10 +389,7 @@ public class Finances extends javax.swing.JFrame {
 
         outcomeTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null}
+
             },
             new String [] {
                 "Name", "Amount", "outcomeID"
@@ -333,6 +410,7 @@ public class Finances extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
+        outcomeTable.setShowGrid(true);
         outcomeTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 outcomeTableMouseReleased(evt);
@@ -342,10 +420,7 @@ public class Finances extends javax.swing.JFrame {
 
         incomeTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null}
+
             },
             new String [] {
                 "Name", "Amount", "incomeID"
@@ -366,6 +441,7 @@ public class Finances extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
+        incomeTable.setShowGrid(true);
         incomeTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 incomeTableMouseReleased(evt);
@@ -376,6 +452,11 @@ public class Finances extends javax.swing.JFrame {
         categoryField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 categoryFieldFocusGained(evt);
+            }
+        });
+        categoryField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                categoryFieldKeyReleased(evt);
             }
         });
 
@@ -393,6 +474,11 @@ public class Finances extends javax.swing.JFrame {
         descriptionField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 descriptionFieldFocusGained(evt);
+            }
+        });
+        descriptionField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                descriptionFieldKeyReleased(evt);
             }
         });
 
@@ -444,8 +530,6 @@ public class Finances extends javax.swing.JFrame {
             }
         });
 
-        pushBox.setText("Push in List");
-
         manageCategories.setText("Manage");
         manageCategories.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -472,11 +556,8 @@ public class Finances extends javax.swing.JFrame {
                                 .addComponent(manageCategories, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(jPanel6Layout.createSequentialGroup()
-                                .addComponent(categoryField, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(pushBox))
-                            .addComponent(categoryBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(categoryBox, 0, 269, Short.MAX_VALUE)
+                            .addComponent(categoryField))
                         .addGap(18, 18, 18)
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -520,8 +601,7 @@ public class Finances extends javax.swing.JFrame {
                     .addComponent(jLabel2)
                     .addComponent(descriptionField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3)
-                    .addComponent(amountField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pushBox))
+                    .addComponent(amountField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
                 .addContainerGap())
@@ -561,8 +641,8 @@ public class Finances extends javax.swing.JFrame {
         );
 
         searchField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                searchFieldKeyTyped(evt);
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                searchFieldKeyReleased(evt);
             }
         });
 
@@ -657,7 +737,7 @@ public class Finances extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(new JLabel(), "Error\nPlease check again the Category field");
             return;
         }
-        if (!methods.isFloat(sAmount)) {
+        if (!Methods.isFloat(sAmount)) {
             JOptionPane.showMessageDialog(new JLabel(), "Error\nPlease check again the Amount field");
             return;
         }
@@ -667,30 +747,7 @@ public class Finances extends javax.swing.JFrame {
                 + " where category = '"
                 + name
                 + "'";
-        try {
-            resultSet = stmt.executeQuery(command);
-            if (pushBox.isSelected()) {
-                if (!resultSet.next()) {
-                    command = "insert into "
-                            + whereCategory
-                            + " values(0, '"
-                            + name
-                            + "')";
-                    stmt.execute(command);
-                }
-            } else {
-                if (resultSet.next()) {
-                    command = "delete from "
-                            + whereCategory
-                            + " where category = '"
-                            + name
-                            + "'";
-                    stmt.execute(command);
-                }
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(Finances.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        
 
         command = "insert into "
                 + where
@@ -719,7 +776,7 @@ public class Finances extends javax.swing.JFrame {
         amountField.setText("");
         categoryBox.setSelectedIndex(0);
         informationArea.setText("Record added successfully");
-        pushBox.setSelected(false);
+        
         if (incomeButton.isSelected()) {
             loadIncomeTable();
         } else if (outcomeButton.isSelected()) {
@@ -730,7 +787,7 @@ public class Finances extends javax.swing.JFrame {
         } catch (SQLException ex) {
             Logger.getLogger(Finances.class.getName()).log(Level.SEVERE, null, ex);
         }
-        pushBox.setSelected(false);
+        
     }//GEN-LAST:event_addRecordButtonActionPerformed
 
     private void calendarTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_calendarTableMouseClicked
@@ -746,6 +803,7 @@ public class Finances extends javax.swing.JFrame {
         if (calendarTable.getSelectedRow() != -1) {
             loadIncomeTable();
             loadOutcomeTable();
+            informationArea.setText("");
         }
     }//GEN-LAST:event_calendarTableMouseReleased
 
@@ -755,7 +813,7 @@ public class Finances extends javax.swing.JFrame {
         } else {
             categoryField.setText((String) categoryBox.getSelectedItem());
             categoryField.setEnabled(false);
-            pushBox.setSelected(true);
+            
         }
 
     }//GEN-LAST:event_categoryBoxActionPerformed
@@ -763,7 +821,7 @@ public class Finances extends javax.swing.JFrame {
     private void incomeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_incomeButtonActionPerformed
         try {
             loadCategoryBox();
-            pushBox.setSelected(false);
+            
         } catch (SQLException ex) {
             Logger.getLogger(Finances.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -772,7 +830,7 @@ public class Finances extends javax.swing.JFrame {
     private void outcomeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_outcomeButtonActionPerformed
         try {
             loadCategoryBox();
-            pushBox.setSelected(false);
+           
         } catch (SQLException ex) {
             Logger.getLogger(Finances.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -793,9 +851,9 @@ public class Finances extends javax.swing.JFrame {
 
         command = "delete from "
                 + where
-                + " where incomeID = "
+                + " where " + where + "ID = "
                 + id;
-
+        //System.out.println(command);
         try {
             stmt.execute(command);
         } catch (SQLException ex) {
@@ -849,12 +907,11 @@ public class Finances extends javax.swing.JFrame {
                 categoryField.setText(iname);
                 if(resultSet.next()) {
                     categoryBox.setSelectedItem(iname);
-                    pushBox.setSelected(true);
                 }
                 else {
                     categoryBox.setSelectedIndex(0);
-                    pushBox.setSelected(false);
                 }
+                
             }
         } catch (SQLException ex) {
             Logger.getLogger(Finances.class.getName()).log(Level.SEVERE, null, ex);
@@ -898,11 +955,11 @@ public class Finances extends javax.swing.JFrame {
                 categoryField.setText(iname);
                 if(resultSet.next()) {
                     categoryBox.setSelectedItem(iname);
-                    pushBox.setSelected(true);
+                    
                 }
                 else {
                     categoryBox.setSelectedIndex(0);
-                    pushBox.setSelected(false);
+                    
                 }
             }
         } catch (SQLException ex) {
@@ -922,74 +979,10 @@ public class Finances extends javax.swing.JFrame {
         amountField.select(0, amountField.getText().length());
     }//GEN-LAST:event_amountFieldFocusGained
 
-    private void searchFieldKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchFieldKeyTyped
-        String text = searchField.getText();
-        if (text.equals("")) {
-            return;
-        }
-        while (incomeTable.getRowCount() != 0) {
-            incomeModel.removeRow(0);
-        }
-        while (outcomeTable.getRowCount() != 0) {
-            outcomeModel.removeRow(0);
-        }
-        String columns[] = {"iname", "idesc"};
-        int foundIncome = 0;
-        int foundOutcome = 0;
-        int id;
-        
-        try {
-
-            command = "select * from income where locate('" + text + "', iname) > 0 or locate('" + text + "', idesc) > 0 order by dateModified desc"; //desc order
-            resultSet = stmt.executeQuery(command);
-
-            while (resultSet.next()) {
-                foundIncome++;
-                //id = resultSet.getInt("incomeID");
-
-                incomeModel.addRow(new Object[]{
-                    resultSet.getString("iday") + "/"
-                    + resultSet.getString("imonth") + "/"
-                    + resultSet.getString("iyear") + ": "
-                    + resultSet.getString("iname"),
-                    resultSet.getFloat("amount"),
-                    resultSet.getInt("incomeID")
-                });
-            }
-
-            command = "select * from outcome where locate('" + text + "', iname) > 0 or locate('" + text + "', idesc) > 0 order by dateModified desc"; //desc order
-            resultSet = stmt.executeQuery(command);
-
-            while (resultSet.next()) {
-                foundOutcome++;
-                outcomeModel.addRow(new Object[]{
-                    resultSet.getString("iday") + "/"
-                    + resultSet.getString("imonth") + "/"
-                    + resultSet.getString("iyear") + ": "
-                    + resultSet.getString("iname"),
-                    resultSet.getFloat("amount"),
-                    resultSet.getInt("outcomeID")
-                });
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(Finances.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        if(foundIncome > 0)
-            informationArea.setText("Found " + foundIncome + " income records");
-        else
-            informationArea.setText("No income records found");
-        
-        if(foundOutcome > 0)
-            informationArea.setText(informationArea.getText() + "\nFound " + foundOutcome + " outcome records");
-        else
-            informationArea.setText(informationArea.getText() + "\nNo outcome records found");
-        
-    }//GEN-LAST:event_searchFieldKeyTyped
-
     private void editRecordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRecordButtonActionPerformed
         if (calendarTable.getSelectedRowCount() > 1) {
             JOptionPane.showMessageDialog(new JLabel(), "Please select one date");
+            return;
         }
         int id = -1;
         String name = categoryField.getText();
@@ -1018,50 +1011,11 @@ public class Finances extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(new JLabel(), "Error\nPlease check again the Category field");
             return;
         }
-        if (!methods.isFloat(sAmount)) {
+        if (!Methods.isFloat(sAmount)) {
             JOptionPane.showMessageDialog(new JLabel(), "Error\nPlease check again the Amount field");
             return;
         }
 
-        command = "select * from "
-                + whereCategory
-                + " where category = '"
-                + name
-                + "'";
-        try {
-            resultSet = stmt.executeQuery(command);
-            if (pushBox.isSelected()) {
-                if (!resultSet.next()) {
-                    command = "insert into "
-                            + whereCategory
-                            + " values(0, '"
-                            + name
-                            + "')";
-                    stmt.execute(command);
-                }
-            } else {
-                if (resultSet.next()) {
-                    command = "delete from "
-                            + whereCategory
-                            + " where category = '"
-                            + name
-                            + "'";
-                    //stmt.execute(command);
-                }
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(Finances.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        /*
-        command = "update products set "
-                    + "productName = '" + productName
-                    + "',productDesc = '" + productDesc
-                    + "',productPrice = " + productPrice
-                    + ",productTax = " + productTax
-                    + ",productFinalPrice = " + productFinalPrice
-                    + " where productID = " + getSelectedProduct();
-        */
         command = "update " + where + " set"
                 + " iname = '" + name
                 + "' ,idesc = '" + desc
@@ -1079,7 +1033,7 @@ public class Finances extends javax.swing.JFrame {
         amountField.setText("");
         categoryBox.setSelectedIndex(0);
         informationArea.setText("Record updated successfully");
-        pushBox.setSelected(false);
+        
         if (incomeButton.isSelected()) {
             loadIncomeTable();
         } else if (outcomeButton.isSelected()) {
@@ -1091,13 +1045,29 @@ public class Finances extends javax.swing.JFrame {
         } catch (SQLException ex) {
             Logger.getLogger(Finances.class.getName()).log(Level.SEVERE, null, ex);
         }
-        pushBox.setSelected(false);
+        
     }//GEN-LAST:event_editRecordButtonActionPerformed
 
     private void manageCategoriesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageCategoriesActionPerformed
         JFrame addCategoryFrame = new addCategory();
         addCategoryFrame.setVisible(true);
     }//GEN-LAST:event_manageCategoriesActionPerformed
+
+    private void categoryFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_categoryFieldKeyReleased
+        categoryField.setText(categoryField.getText().replace('\'', '`'));
+        categoryField.setText(categoryField.getText().replace('"', '`'));
+    }//GEN-LAST:event_categoryFieldKeyReleased
+
+    private void descriptionFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_descriptionFieldKeyReleased
+        descriptionField.setText(descriptionField.getText().replace('\'', '`'));
+        descriptionField.setText(descriptionField.getText().replace('"', '`'));
+    }//GEN-LAST:event_descriptionFieldKeyReleased
+
+    private void searchFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchFieldKeyReleased
+        searchField.setText(searchField.getText().replace('\'', '`'));
+        searchField.setText(searchField.getText().replace('"', '`'));
+        searchAction();
+    }//GEN-LAST:event_searchFieldKeyReleased
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
@@ -1172,7 +1142,6 @@ public class Finances extends javax.swing.JFrame {
     private javax.swing.JButton manageCategories;
     private javax.swing.JRadioButton outcomeButton;
     private javax.swing.JTable outcomeTable;
-    private javax.swing.JCheckBox pushBox;
     private javax.swing.JButton removeRecordButton;
     private javax.swing.JTextField searchField;
     // End of variables declaration//GEN-END:variables

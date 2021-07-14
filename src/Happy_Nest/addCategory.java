@@ -1,30 +1,22 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Happy_Nest;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author Yunix
- */
+
 public class addCategory extends javax.swing.JFrame {
 
-    /**
-     * Creates new form addCategory
-     */
     public addCategory() {
         initComponents();
         initLocalConnection();
@@ -39,12 +31,26 @@ public class addCategory extends javax.swing.JFrame {
 
     private void initLocalConnection() {
         try {
-            Connection localConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbHappyNest?", "root", "ebisonovsekonem");
+            String login = "";
+            String password = "";
+            File dbCreds = new File("dbCreds.txt");
+            if(dbCreds.exists())
+            {
+                Scanner input = new Scanner(dbCreds);
+                CryptoCSV.resetCounter();
+                login = (input.hasNextLine()?CryptoCSV.decrypt(input.nextLine()):"root");
+                password = (input.hasNextLine()?CryptoCSV.decrypt(input.nextLine()):"password");
+                JOptionPane.showMessageDialog(new JLabel(), login + "\n" + password);
+                input.close();
+            }
+            Connection localConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbHappyNest?", login, password);
             stmt = localConnection.createStatement();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(new JLabel(), "Error while connecting to database\nContact support", "Connection error", JOptionPane.ERROR_MESSAGE);
             Logger.getLogger(Vendors.class.getName()).log(Level.SEVERE, null, ex);
-            super.dispose();
+            this.dispose();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(FinanceReview.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -140,6 +146,12 @@ public class addCategory extends javax.swing.JFrame {
             }
         });
 
+        categoryField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                categoryFieldKeyReleased(evt);
+            }
+        });
+
         addButton.setText("Add");
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -163,16 +175,15 @@ public class addCategory extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(categoryField, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(addButton, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(0, 0, Short.MAX_VALUE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(incomeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(outcomeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(categoryField, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(addButton, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(incomeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(outcomeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(removeButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -245,6 +256,11 @@ public class addCategory extends javax.swing.JFrame {
             Logger.getLogger(addCategory.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_removeButtonActionPerformed
+
+    private void categoryFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_categoryFieldKeyReleased
+        categoryField.setText(categoryField.getText().replace('\'', '`'));
+        categoryField.setText(categoryField.getText().replace('"', '`'));
+    }//GEN-LAST:event_categoryFieldKeyReleased
 
     /**
      * @param args the command line arguments

@@ -12,7 +12,10 @@ public abstract class CryptoCSV {
         String text = "";
         for(int i = 0; i < word.length(); i++) {
             //System.out.println(word.charAt(i) + " + " + nums[counter] + " = " + ((int)word.charAt(i) + nums[counter]));
-            text += (char)(chars[cyc(locate(word.charAt(i)) + nums[counter])]);
+            char c = (char)(chars[cyc(locate(word.charAt(i)) + nums[counter])]);
+            if(c == '"' || c == '\\')
+                text += '\\';
+            text += c;
             counter = (counter + 1) % 512;
         }
         return text;
@@ -71,11 +74,23 @@ public abstract class CryptoCSV {
     
     //random chars order
     private static final char chars[] = {
+        'I', 'E', 'D', '{', 'A', 'l', 'T', 's', 'C', '1', '>', 'P', '%', 'έ', 'M', '0', 'v', 'φ', 'Χ', 'χ', 'Ψ', 'ή',
+        '4', 'ν', 'Ξ', 'ξ', 'f', 'h', '(', '$', 'J', 'α', 'u', '9', '~', 'z', 'ό', 'V', '8', 'm', '-', '/', 'N', 'k',
+        'W', 'y', '?', 'r', 'L', 'o', 'B', '[', '+', 'ε', 'Ζ', 'ζ', 'F', '<', '=', 'n', '\'', 'j', 'Q', '!', 'ί', 'Ή',
+        '2', 'd', '`', 't', ' ', '6', 'H', 'β', 'K', '#', 'w', '^', ':', 'ύ', '3', ']', 'p', 'G', '|', '7', 'c', 'q',
+        'U', '@', '}', ')', 'R', 'Z', 'X', 'O', ';', ',', 'x', 'a', 'S', 'i', '5', '\n', 'ψ', 'Ω', 'ω', 'ά', 'ώ', 'Ό',
+        'Α', 'Β' , 'Γ', 'γ', 'Δ', 'δ', 'Ε', 'Η', 'η', 'Θ', 'θ', 'Ι', 'ι', 'Κ', '&', '_', 'κ', 'Λ', 'λ', 'Μ', 'μ', 'Έ',
+        'Ν', 'Ο', 'ο', 'Π', 'π', '*', '.', 'g' , 'Ρ', 'ρ', 'Σ', 'σ', 'ς', 'Τ', 'τ', 'Υ', 'υ', 'Φ', 'e', 'b', 'Y', 'Ώ',
+        'Ί', 'Ύ', 'Ά', '΄'
+    };
+    /*
+    private static final char chars[] = {
         'I', 'E', 'D', '{', 'A', 'l', 'T', 's', 'C', '1', '>', '*', '.', 'g', 'P', '%', 'M', '0', 'v',
         '4', 'f', 'h', '(', '$', 'J', 'u', '9', '~', 'z', 'V', '8', 'm', '-', '/', 'N', 'k', 'e', 'b', 'Y',
         'W', 'y', '?', 'r', 'L', 'o', 'B', '[', '+', 'F', '<', '=', 'n', '&', '_', '\'', 'j', 'Q', '!',
         '2', 'd', '`', 't', ' ', '6', 'H', 'K', '#', 'w', '^', ':', '3', ']', 'p', 'G', '|', '7', 'c', 'q',
         'U', '@', '}', ')', 'R', 'Z', 'X', 'O', ';', ',', 'x', 'a', 'S', 'i', '5', '\n'
     };
+    */
     private static int counter;
 }

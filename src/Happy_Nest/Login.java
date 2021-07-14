@@ -49,6 +49,7 @@ public class Login extends javax.swing.JFrame {
         passwordButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Happy Nest Login");
         setResizable(false);
 
         jPanel1.setBackground(new java.awt.Color(0, 0, 255));
@@ -155,8 +156,9 @@ public class Login extends javax.swing.JFrame {
                 Scanner input = new Scanner(doc);
                 while(input.hasNextLine())//Read the content of txt file
                 {
-                    password = input.nextLine();
-                    //System.out.println(password);
+                    //CryptoCSV.resetCounter();
+                    password = input.nextLine(); //CryptoCSV.decrypt(input.nextLine());
+                    System.out.println(password);
                 }
                 
             }
@@ -181,6 +183,12 @@ public class Login extends javax.swing.JFrame {
             this.setVisible(false);
             this.dispose();
         }
+        else {
+            JOptionPane.showMessageDialog(new JLabel(), "Wrong password, please try again");
+            tries ++;
+            if (tries == 3)
+                this.dispose();
+        }
         
     }//GEN-LAST:event_passwordButtonActionPerformed
     
@@ -196,10 +204,17 @@ public class Login extends javax.swing.JFrame {
             FileWriter writer = null;
             try {
                 password = JOptionPane.showInputDialog(new JLabel(), "Enter new password");
-                JOptionPane.showMessageDialog(new JLabel(), "The new password is set to " + password);
+                if(password.contains("'") || password.contains("\"")) {
+                    JOptionPane.showMessageDialog(new JLabel(), "Please dont use ' or \" special symbols");
+                    return;
+                }
                 writer = new FileWriter(directory);
-                writer.write(password); //set the password for the first time
+                //CryptoCSV.resetCounter();
+                //String o = password;
+                //password = CryptoCSV.encrypt(password);
+                writer.write(password);//CryptoCSV.encrypt(password)); //set the password for the first time
                 writer.close();
+                JOptionPane.showMessageDialog(new JLabel(), "The new password is set to " + password + "\n");
             } catch (IOException ex) {
                 Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
@@ -277,7 +292,7 @@ public class Login extends javax.swing.JFrame {
     private String m = "(_`C";
     private String n = "k&sSM";
     private String O = "sWqS3";
-
+    private static int tries = 0;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
